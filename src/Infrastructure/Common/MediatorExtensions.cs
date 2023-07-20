@@ -1,11 +1,12 @@
 ﻿using UserPermission.API.Domain.Common;
 using Microsoft.EntityFrameworkCore;
+using MediatR;
 
-namespace MediatR;
+namespace UserPermission.API.Infrastructure.Common;
 
 public static class MediatorExtensions
 {
-    public static async Task DispatchDomainEvents(this IMediator mediator, DbContext context) 
+    public static async Task DispatchDomainEvents(this IMediator mediator, DbContext context)
     {
         var entities = context.ChangeTracker
             .Entries<BaseEntity>()

@@ -1,14 +1,26 @@
+using Microsoft.OpenApi.Models;
+using Serilog;
+using Serilog.Events;
+using UserPermission.API.Application;
+using UserPermission.API.Infrastructure;
 using UserPermission.API.Infrastructure.Persistence;
+
+Log.Logger = new LoggerConfiguration().WriteTo.Console()
+    .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning).CreateLogger();
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Host.UseSerilog();
 // Add services to the container.
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
 builder.Services.AddWebUIServices();
-
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "UserPermission.API", Version = "v1" });
+});
 var app = builder.Build();
-
+app.UseSerilogRequestLogging();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -29,26 +41,21 @@ else
     app.UseHsts();
 }
 
-app.UseHealthChecks("/health");
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
-app.UseSwaggerUi3(settings =>
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    settings.Path = "/api";
-    settings.DocumentPath = "/api/specification.json";
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "UserPermission.API");
 });
 
 app.UseRouting();
-
-app.UseAuthentication();
-app.UseIdentityServer();
-app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller}/{action=Index}/{id?}");
 
-app.MapFallbackToFile("index.html");
-
 app.Run();
+
+public partial class Program { }

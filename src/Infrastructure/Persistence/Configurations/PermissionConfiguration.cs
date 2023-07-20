@@ -13,6 +13,7 @@ namespace UserPermission.API.Infrastructure.Persistence.Configurations
                 .HasForeignKey(p => p.PermissionTypeId)
                 .IsRequired()
                 .OnDelete(DeleteBehavior.Cascade);
+            builder.Property(x => x.Id).ValueGeneratedNever();
         }
     }
 }

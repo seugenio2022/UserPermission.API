@@ -45,24 +45,28 @@ public class UserPermissionDbContextInitialiser
 
     public async Task TrySeedAsync()
     {
+        if (!_context.Employees.Any())
+        {
+            _context.Employees.Add(new Domain.Entities.Employee
+            {
+                Name = "Employee",
+                Email = new("Employee1@gmail.com")             
+            });
 
-        // Default data
-        // Seed, if necessary
-        //if (!_context.TodoLists.Any())
-        //{
-        //    _context.TodoLists.Add(new TodoList
-        //    {
-        //        Title = "Todo List",
-        //        Items =
-        //        {
-        //            new TodoItem { Title = "Make a todo list 📃" },
-        //            new TodoItem { Title = "Check off the first item ✅" },
-        //            new TodoItem { Title = "Realise you've already done two things on the list! 🤯"},
-        //            new TodoItem { Title = "Reward yourself with a nice, long nap 🏆" },
-        //        }
-        //    });
+            await _context.SaveChangesAsync();
+        }
+        if (!_context.PermissionTypes.Any())
+        {
+            _context.PermissionTypes.AddRange(new Domain.Entities.PermissionType
+            {
+                Name = "Document Access"
+            },
+            new Domain.Entities.PermissionType
+            {
+                Name = "Document Editing"
+            });
 
-        //    await _context.SaveChangesAsync();
-        //}
+            await _context.SaveChangesAsync();
+        }
     }
 }

@@ -2,6 +2,7 @@
 using UserPermission.API.Domain.Entities;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using UserPermission.API.Infrastructure.Common;
 
 namespace UserPermission.API.Infrastructure.Persistence;
 
@@ -35,8 +36,10 @@ public class UserPermissionDbContext :DbContext
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
+        var entries = await base.SaveChangesAsync(cancellationToken);
+        
         await _mediator.DispatchDomainEvents(this);
 
-        return await base.SaveChangesAsync(cancellationToken);
+        return entries;
     }
 }

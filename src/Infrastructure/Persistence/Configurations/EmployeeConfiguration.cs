@@ -13,6 +13,9 @@ namespace UserPermission.API.Infrastructure.Persistence.Configurations
                 .HasForeignKey(p => p.EmployeeId)
                 .IsRequired()
                 .OnDelete(DeleteBehavior.Cascade);
+
+            builder.OwnsOne(p => p.Email)
+                            .Property(p => p.Value).HasColumnName("Email");
         }
     }
 }

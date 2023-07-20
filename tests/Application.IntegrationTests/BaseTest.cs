@@ -1,37 +1,46 @@
-﻿using MediatR;
-using Microsoft.AspNetCore.Identity;
+﻿using Confluent.Kafka;
+using MediatR;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using NUnit.Framework;
+using Nest;
+using Newtonsoft.Json;
 using Respawn;
+using UserPermission.API.Application.Common.DTOs;
+using UserPermission.API.Application.Common.Interfaces.RepositoryRead;
+using UserPermission.API.Application.Queries.SyncQueries;
+using Xunit;
 
 namespace UserPermission.API.Application.IntegrationTests;
 
-[SetUpFixture]
-public partial class Testing
+public class BaseTest : IClassFixture<TestWebAppFactory>
 {
     private static WebApplicationFactory<Program> _factory = null!;
     private static IConfiguration _configuration = null!;
     private static IServiceScopeFactory _scopeFactory = null!;
+    private static IElasticClient _elasticClient = null!;
     private static Respawner _checkpoint = null!;
-    private static string? _currentUserId;
-
-    [OneTimeSetUp]
+    public BaseTest(TestWebAppFactory factory)
+    {
+        _factory = factory;
+        RunBeforeAnyTests();
+        ResetState().GetAwaiter().GetResult();
+    }
     public void RunBeforeAnyTests()
     {
-        _factory = new CustomWebApplicationFactory();
         _scopeFactory = _factory.Services.GetRequiredService<IServiceScopeFactory>();
         _configuration = _factory.Services.GetRequiredService<IConfiguration>();
+        _elasticClient = _factory.Services.GetRequiredService<IElasticClient>();
 
         _checkpoint = Respawner.CreateAsync(_configuration.GetConnectionString("DefaultConnection")!, new RespawnerOptions
         {
             TablesToIgnore = new Respawn.Graph.Table[] { "__EFMigrationsHistory" }
         }).GetAwaiter().GetResult();
+
     }
 
-    public static async Task<TResponse> SendAsync<TResponse>(IRequest<TResponse> request)
+    public static async Task<TResponse> SendAsync<TResponse>(MediatR.IRequest<TResponse> request)
     {
         using var scope = _scopeFactory.CreateScope();
 
@@ -51,28 +60,22 @@ public partial class Testing
 
     public static async Task ResetState()
     {
-        try
-        {
-            await _checkpoint.ResetAsync(_configuration.GetConnectionString("DefaultConnection")!);
-        }
-        catch (Exception) 
-        {
-        }
+        await _checkpoint.ResetAsync(_configuration.GetConnectionString("DefaultConnection")!);
+        DeleteAllDocumentsInIndex();
 
-        _currentUserId = null;
     }
 
-    public static async Task<TEntity?> FindAsync<TEntity>(params object[] keyValues)
+    public static async Task<TEntity?> FindByIdAsync<TEntity>(Guid id)
         where TEntity : class
     {
         using var scope = _scopeFactory.CreateScope();
 
         var context = scope.ServiceProvider.GetRequiredService<Infrastructure.Persistence.UserPermissionDbContext>();
 
-        return await context.FindAsync<TEntity>(keyValues);
+        return await context.FindAsync<TEntity>(id);
     }
 
-    public static async Task AddAsync<TEntity>(TEntity entity)
+    public static async Task<TEntity> AddAsync<TEntity>(TEntity entity)
         where TEntity : class
     {
         using var scope = _scopeFactory.CreateScope();
@@ -82,19 +85,28 @@ public partial class Testing
         context.Add(entity);
 
         await context.SaveChangesAsync();
+
+        return entity;
     }
 
-    public static async Task<int> CountAsync<TEntity>() where TEntity : class
+    public static void InsertToReadRepository(PermissionDto entity)
     {
         using var scope = _scopeFactory.CreateScope();
 
-        var context = scope.ServiceProvider.GetRequiredService<Infrastructure.Persistence.UserPermissionDbContext>();
+        var repo = scope.ServiceProvider.GetRequiredService<IRepositoryRead>();
 
-        return await context.Set<TEntity>().CountAsync();
+        repo.Insert(entity);
     }
 
-    [OneTimeTearDown]
-    public void RunAfterAnyTests()
+    public static void DeleteAllDocumentsInIndex()
     {
+
+        var indexName = _configuration.GetValue<string>("ElasticSearchDefaultIndex");
+
+        var deleteResponse = _elasticClient.DeleteByQuery<object>(d => d
+            .Index(indexName)
+            .Query(q => q.MatchAll())
+        );
     }
+
 }
