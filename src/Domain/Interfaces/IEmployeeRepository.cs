@@ -1,6 +1,6 @@
 ﻿using UserPermission.API.Domain.Entities;
 
-namespace UserPermission.API.Application.Common.Interfaces.RepositoryWrite
+namespace UserPermission.API.Domain.Interfaces
 {
     public interface IEmployeeRepository : IRepositoryWrite<Employee>
     {

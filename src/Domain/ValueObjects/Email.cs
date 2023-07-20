@@ -11,8 +11,7 @@ namespace UserPermission.API.Domain.ValueObjects
 {
     public class Email : ValueObject
     {
-        private const string EmailRegexPattern =
-        @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$";
+        private const string EmailRegexPattern = @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$";
 
         public string Value { get; private set; }
 
@@ -26,7 +25,6 @@ namespace UserPermission.API.Domain.ValueObjects
 
             Value = value;
         }
-
 
         private static bool IsValidEmailFormat(string email)
         {

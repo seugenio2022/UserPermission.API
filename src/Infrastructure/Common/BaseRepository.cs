@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using UserPermission.API.Application.Common.Interfaces.RepositoryWrite;
+using UserPermission.API.Domain.Interfaces;
 using UserPermission.API.Infrastructure.Persistence;
 
 namespace UserPermission.API.Infrastructure.Common
@@ -11,18 +11,18 @@ namespace UserPermission.API.Infrastructure.Common
         {
             this.context = context;
         }
-        public async Task Add(TEntity entity)
+        public async Task AddAsync(TEntity entity)
         {
             await context.Set<TEntity>().AddAsync(entity);
         }
 
-        public async Task Delete(Guid id)
+        public async Task DeleteAsync(Guid id)
         {
             var entity = await context.Set<TEntity>().FindAsync(id);
             context.Set<TEntity>().Remove(entity);
         }
 
-        public async Task<TEntity> Get(Guid id)
+        public async Task<TEntity> GetAsync(Guid id)
         {
             return await context.Set<TEntity>().FindAsync(id);
         }

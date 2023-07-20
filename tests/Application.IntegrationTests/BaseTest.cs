@@ -10,6 +10,8 @@ using Respawn;
 using UserPermission.API.Application.Common.DTOs;
 using UserPermission.API.Application.Common.Interfaces.RepositoryRead;
 using UserPermission.API.Application.Queries.SyncQueries;
+using UserPermission.API.Domain.Entities;
+using UserPermission.API.Domain.Interfaces;
 using Xunit;
 
 namespace UserPermission.API.Application.IntegrationTests;
@@ -87,6 +89,21 @@ public class BaseTest : IClassFixture<TestWebAppFactory>
         await context.SaveChangesAsync();
 
         return entity;
+    }
+
+    public static async Task<Permission> AddPermissionAsync(string name, string description, Guid employeeId, Guid permissionTypeId)
+    {
+        using var scope = _scopeFactory.CreateScope();
+
+        var context = scope.ServiceProvider.GetRequiredService<Infrastructure.Persistence.UserPermissionDbContext>();
+        var employeeRepository = scope.ServiceProvider.GetRequiredService<IEmployeeRepository>();
+        var permissionTypeRepository = scope.ServiceProvider.GetRequiredService<IPermissionTypeRepository>();
+        var permission = await Permission.CreateAsync(name, description, employeeId, permissionTypeId, employeeRepository, permissionTypeRepository);
+        context.Add(permission);
+
+        await context.SaveChangesAsync();
+
+        return permission;
     }
 
     public static void InsertToReadRepository(PermissionDto entity)

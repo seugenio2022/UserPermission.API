@@ -1,4 +1,5 @@
 ﻿using UserPermission.API.Application.Common.Interfaces.RepositoryWrite;
+using UserPermission.API.Domain.Interfaces;
 using UserPermission.API.Infrastructure.Persistence;
 
 namespace UserPermission.API.Infrastructure.Common
@@ -22,7 +23,7 @@ namespace UserPermission.API.Infrastructure.Common
             EmployeeRepository = employeeRepository;
         }
 
-        public async Task<int> Save() => await _context.SaveChangesAsync();
+        public async Task<int> SaveAsync() => await _context.SaveChangesAsync();
 
         public void Dispose()
         {

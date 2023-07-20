@@ -1,4 +1,5 @@
-﻿using UserPermission.API.Domain.Events;
+﻿using UserPermission.API.Domain.Exceptions;
+using UserPermission.API.Domain.Interfaces;
 
 namespace UserPermission.API.Domain.Entities
 {
@@ -17,21 +18,50 @@ namespace UserPermission.API.Domain.Entities
 
         }
 
-        public Permission(string name, string description, Guid employeeId, Guid permissionTypeId)
+        public static async Task<Permission> CreateAsync(string name, string description, Guid employeeId, Guid permissionTypeId,
+            IEmployeeRepository employeeRepository, IPermissionTypeRepository permissionTypeRepository)
         {
-            Id = Guid.NewGuid();
+            await ThrowErrorOnInvalidRelations(employeeId, permissionTypeId, employeeRepository, permissionTypeRepository);
+
+            return new Permission
+            {
+                Id = Guid.NewGuid(),
+                Name = name,
+                Description = description,
+                EmployeeId = employeeId,
+                PermissionTypeId = permissionTypeId
+            };
+        }
+
+
+        public async Task ModifyAsync(string name, string description, Guid employeeId, Guid permissionTypeId,
+            IEmployeeRepository employeeRepository, IPermissionTypeRepository permissionTypeRepository)
+        {
+            await ThrowErrorOnInvalidRelations(employeeId, permissionTypeId, employeeRepository, permissionTypeRepository);
+
             Name = name;
             Description = description;
             EmployeeId = employeeId;
             PermissionTypeId = permissionTypeId;
         }
 
-        public void Modify(string name, string description, Guid employeeId, Guid permissionTypeId)
+        private static async Task ThrowErrorOnInvalidRelations(
+            Guid employeeId,
+            Guid permissionTypeId,
+            IEmployeeRepository employeeRepository,
+            IPermissionTypeRepository permissionTypeRepository)
         {
-            Name = name;
-            Description = description;
-            EmployeeId = employeeId;
-            PermissionTypeId = permissionTypeId;
+            var employee = await employeeRepository.GetAsync(employeeId);
+            if (employee == null)
+            {
+                throw new EmployeeNotFoundException(employeeId);
+            }
+
+            var permissionType = await permissionTypeRepository.GetAsync(permissionTypeId);
+            if (permissionType == null)
+            {
+                throw new PermissionTypeNotFoundException(permissionTypeId);
+            }
         }
     }
 }

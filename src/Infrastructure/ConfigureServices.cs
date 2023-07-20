@@ -10,6 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 using UserPermission.API.Application.Common.Interfaces.RepositoryRead;
 using UserPermission.API.Infrastructure.Persistence.RepositoryRead;
 using UserPermission.API.Infrastructure.Services.ConsumerService;
+using UserPermission.API.Domain.Interfaces;
 
 namespace UserPermission.API.Infrastructure;
 

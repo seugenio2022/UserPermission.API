@@ -1,4 +1,5 @@
-﻿using FluentAssertions;
+﻿using CsvHelper;
+using FluentAssertions;
 using UserPermission.API.Application.Commands.ModifyPermission;
 using UserPermission.API.Application.Commands.RequestPermission;
 using UserPermission.API.Domain.Entities;
@@ -28,8 +29,7 @@ namespace UserPermission.API.Application.IntegrationTests.Commands
                 Name = "Document Access"
             });  
             
-            var permissionCreated = await AddAsync(new Domain.Entities.Permission
-                ("Name", "Description", employeeCreated.Id, permissionTypeCreated.Id));
+            var permissionCreated = await AddPermissionAsync("Name", "Description", employeeCreated.Id, permissionTypeCreated.Id);
 
             var sut = new ModifyPermissionCommand(permissionCreated.Id, "Name Modified", "Description Modified", employeeCreated.Id, permissionTypeCreated.Id);
 
