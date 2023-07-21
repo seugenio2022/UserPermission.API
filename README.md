@@ -10,9 +10,9 @@ API that allows assigning permissions to employees. An employee and 2 types of p
 
 ## Execution
 
-1 - Run "docker-compose up -d"
-2 - Modify the "Server" value used locally in src/WebUI/appsettings.json and tests/Application.IntegrationTests/appsettings.json
-3 - Open http://localhost:5000/swagger/index.html
+1. Run "docker-compose up -d"
+2. Modify the "Server" value used locally in src/WebUI/appsettings.json and tests/Application.IntegrationTests/appsettings.json
+3. Open http://localhost:5000/swagger/index.html
 
 ## Features
 
