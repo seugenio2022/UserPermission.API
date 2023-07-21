@@ -1,0 +1,264 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: user-permission-api
+  name: kafka-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka
+  template:
+    metadata:
+      labels:
+        app: kafka
+    spec:
+      containers:
+        - name: kafka
+          image: confluentinc/cp-kafka:latest
+          ports:
+            - containerPort: 9092
+          env:
+            - name: KAFKA_BROKER_ID
+              value: "1"
+            - name: KAFKA_ZOOKEEPER_CONNECT
+              value: "zookeeper:2181"
+            - name: KAFKA_ADVERTISED_LISTENERS
+              value: "PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092"
+            - name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
+              value: "PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT"
+            - name: KAFKA_INTER_BROKER_LISTENER_NAME
+              value: "PLAINTEXT"
+            - name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
+              value: "1"
+          volumeMounts:
+            - mountPath: "/etc/kafka/secrets"
+              name: secrets
+      volumes:
+        - name: secrets
+          hostPath:
+            path: "./secrets"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: user-permission-api
+  name: zookeeper-service
+spec:
+  selector:
+    app: kafka
+  ports:
+    - protocol: TCP
+      port: 2181
+      targetPort: 2181
+  type: ClusterIP
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: user-permission-api
+  name: elasticsearch-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: elasticsearch
+  template:
+    metadata:
+      labels:
+        app: elasticsearch
+    spec:
+      containers:
+        - name: elasticsearch
+          image: docker.elastic.co/elasticsearch/elasticsearch:7.11.0
+          ports:
+            - containerPort: 9200
+          env:
+            - name: xpack.security.enabled
+              value: "false"
+            - name: discovery.type
+              value: "single-node"
+            - name: ES_JAVA_OPTS
+              value: "-Xms512m -Xmx512m"
+          resources:
+            limits:
+              memory: "1Gi"  
+            requests:
+              memory: "1Gi"
+          volumeMounts:
+            - mountPath: "/usr/share/elasticsearch/data"
+              name: elasticsearch-data
+      volumes:
+        - name: elasticsearch-data
+          persistentVolumeClaim:
+            claimName: elasticsearch-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: user-permission-api
+  name: elasticsearch-service
+spec:
+  selector:
+    app: elasticsearch
+  ports:
+    - protocol: TCP
+      port: 9200
+      targetPort: 9200
+  type: ClusterIP
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: user-permission-api
+  name: kibana-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kibana
+  template:
+    metadata:
+      labels:
+        app: kibana
+    spec:
+      containers:
+        - name: kibana
+          image: docker.elastic.co/kibana/kibana:7.11.0
+          ports:
+            - containerPort: 5601
+          env:
+            - name: ELASTICSEARCH_URL
+              value: "http://elasticsearch-service:9200"
+            - name: ELASTICSEARCH_HOSTS
+              value: "http://elasticsearch-service:9200"
+      dependsOn:
+        - name: elasticsearch-service
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: user-permission-api
+  name: kibana-service
+spec:
+  selector:
+    app: kibana
+  ports:
+    - protocol: TCP
+      port: 5601
+      targetPort: 5601
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  namespace: user-permission-api
+  name: elasticsearch-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi 
+  storageClassName: userPermissionStorage
+  
+  ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: user-permission-api
+  name: sql-server-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sql-server
+  template:
+    metadata:
+      labels:
+        app: sql-server
+    spec:
+      containers:
+        - name: sql-server
+          image: mcr.microsoft.com/mssql/server:2017-latest
+          env:
+            - name: ACCEPT_EULA
+              value: "Y"
+            - name: SA_PASSWORD
+              value: "YourStrongPassword" 
+          ports:
+            - containerPort: 1433
+      volumes:
+        - name: sql-server-data
+          persistentVolumeClaim:
+            claimName: sql-server-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: user-permission-api
+  name: sql-server-service
+spec:
+  selector:
+    app: sql-server
+  ports:
+    - protocol: TCP
+      port: 1433
+      targetPort: 1433
+  type: ClusterIP
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: user-permission-api
+  name: user-permission-api-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      containers:
+        - name: api
+          image: user-permission-api-image:v1
+          ports:
+            - containerPort: 80
+          env:
+            - name: Settings__DatabaseConnection
+              value: "Server=sql-server-service:1433;Database=YourDatabase;User Id=sa;Password=YourStrongPassword"  # Reemplaza con la conexión a tu SQL Server
+            - name: Settings__ElasticSearchConnection
+              value: "http://elasticsearch-service:9200"
+            - name: Settings__ElasticSearchDefaultIndex
+              value: "permissions_index"
+            - name: Settings__KafkaConnection
+              value: "kafka-service:9092"
+          volumeMounts:
+            - mountPath: "/data"
+              name: data
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: user-permission-api
+  name: user-permission-api-service
+spec:
+  selector:
+    app: api
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: LoadBalancer
