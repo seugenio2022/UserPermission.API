@@ -8,7 +8,6 @@ using Nest;
 using UserPermission.API.Application.Common.Interfaces;
 using UserPermission.API.Application.Common.Interfaces.RepositoryRead;
 using UserPermission.API.Infrastructure.Persistence.RepositoryRead;
-using UserPermission.API.Infrastructure.Services.ConsumerService;
 using UserPermission.API.Infrastructure.Services.ElasticService;
 using UserPermission.API.Infrastructure.Services.ProducerService;
 

@@ -23,8 +23,7 @@ var app = builder.Build();
 app.UseSerilogRequestLogging();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
-{
-    app.UseDeveloperExceptionPage();
+{    
     app.UseMigrationsEndPoint();
 
     // Initialise and seed database

@@ -2,7 +2,7 @@
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using UserPermission.API.Domain.Common;
+using UserPermission.API.Domain.Exceptions;
 
 namespace UserPermission.API.WebUI.Filters;
 
@@ -17,7 +17,9 @@ public class ApiExceptionFilterAttribute : ExceptionFilterAttribute
             {
                 { typeof(ValidationException), HandleValidationException },
                 { typeof(NotFoundException), HandleNotFoundException },
-                { typeof(BusinessException), HandleBusinessException },
+                { typeof(EmployeeNotFoundException), HandleBusinessException },
+                { typeof(PermissionTypeNotFoundException), HandleBusinessException },
+                { typeof(InvalidEmailFormatException), HandleBusinessException },
             };
     }
 
@@ -88,7 +90,7 @@ public class ApiExceptionFilterAttribute : ExceptionFilterAttribute
 
     private void HandleBusinessException(ExceptionContext context)
     {
-        var exception = (BusinessException)context.Exception;
+        var exception = (Exception)context.Exception;
 
         var details = new ProblemDetails()
         {

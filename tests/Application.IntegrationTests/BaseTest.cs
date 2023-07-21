@@ -1,15 +1,12 @@
-﻿using Confluent.Kafka;
-using MediatR;
+﻿using MediatR;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Nest;
-using Newtonsoft.Json;
 using Respawn;
 using UserPermission.API.Application.Common.DTOs;
 using UserPermission.API.Application.Common.Interfaces.RepositoryRead;
-using UserPermission.API.Application.Queries.SyncQueries;
 using UserPermission.API.Domain.Entities;
 using UserPermission.API.Domain.Interfaces;
 using Xunit;

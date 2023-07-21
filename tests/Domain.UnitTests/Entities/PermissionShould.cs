@@ -1,15 +1,8 @@
 ﻿using FluentAssertions;
 using Moq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security;
-using System.Text;
-using System.Threading.Tasks;
 using UserPermission.API.Domain.Entities;
 using UserPermission.API.Domain.Exceptions;
 using UserPermission.API.Domain.Interfaces;
-using UserPermission.API.Domain.ValueObjects;
 using Xunit;
 
 namespace UserPermission.API.Domain.UnitTests.Entities
